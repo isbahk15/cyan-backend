@@ -20,7 +20,7 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 5000,
       maxPoolSize: 10,
     });
-    
+
     console.log("Mongo Atlas successfully connected");
   } catch (err) {
     console.error("Mongo Atlas connection error:", err);
@@ -28,7 +28,60 @@ const connectDB = async () => {
   }
 };
 
+const postSchema = new mongoose.Schema({
+  caption: {
+    type: String,
+    required: [true, "Caption is required"],
+    trim: true,
+    maxlength: [200, "caption cannot exceed 200 characters"],
+  },
+  image: {
+    type: String,
+    required: [true, "image URL is required"],
+    trim: true,
+  },
+category:{
+  type: String,
+ required: [true, "Category is required"],
+  trim: true,
+
+},
+createdAt: {
+  type: Date,
+  default: Date.now,
+}
+
+});
+const Posts = mongoose.model("Posts", postSchema);
+
+
 connectDB();
+
+app.get('/api/posts', async (req, res)=>{
+  try{
+    const posts = await Posts.find().sort({createdAt: -1});
+    res.json(posts);
+  } catch (err){
+    console.error("Error fetching posts:", err);
+    res.status(500).json({error: "Failed to fetch posts"});
+  }
+  });
+
+  app.post ('/api/posts', async (req, res) => {
+try{
+const {caption, image, category} = req.body;
+const newPost = new Posts ({caption, image, category});
+const savedPost = await newPost.save();
+res.status(201).json(savedPost);
+
+
+}  catch (err){
+    console.error("Error creating posts:", err);
+    res.status(500).json({error: "Failed to create posts"});
+  }
+
+
+  });
 
 app.get("/", (req, res) => {
   res.send("This is the Cyan API");
